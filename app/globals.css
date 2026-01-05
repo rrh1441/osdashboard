@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@400;500;600&display=swap');
 
 :root {
   --bg-paper: #f9f8f4;
@@ -10,15 +10,22 @@
   --text-main: #222222;
   --text-muted: #666666;
   --border: #e0e0e0;
+  --border-strong: #ccc;
+  --tag-bg: #f1f3f4;
   --green: #1e7e34;
   --green-bg: #e6f4ea;
   --amber: #b7791f;
   --amber-bg: #fff8e1;
   --slate: #5f6368;
   --slate-bg: #f1f3f4;
+  --blue: #1a73e8;
+  --blue-bg: #e8f0fe;
+  --purple: #7c3aed;
+  --purple-bg: #f3e8ff;
 }
 
 body {
   background: var(--bg-paper);
   color: var(--text-main);
+  font-family: 'Inter', -apple-system, sans-serif;
 }
