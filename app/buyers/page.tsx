@@ -149,15 +149,10 @@ export default function BuyersPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-8">
         <h1 className="font-serif text-3xl font-semibold text-[#111] tracking-tight">
           Buyer Dashboard
         </h1>
-        <div className="flex gap-6 text-sm">
-          <span className="text-[#666]">{stats.clientCount} Clients</span>
-          <span className="text-[#666]">{stats.peCount} PE Firms</span>
-          <span className="text-[#1e7e34] font-semibold">{stats.totalA} A matches</span>
-        </div>
       </div>
 
       <div className="grid grid-cols-4 gap-4 mb-8">
@@ -202,32 +197,38 @@ export default function BuyersPage() {
       <div className="bg-white border border-[#e0e0e0] rounded-md overflow-hidden">
         <table className="w-full">
           <thead>
-            {/* Group header row */}
+            {/* Row 1: Main headers with rowSpan for columns without sub-headers */}
             <tr className="bg-[#f1f3f4] border-b border-[#e0e0e0]">
-              <th className="px-4 py-2" rowSpan={2}></th>
-              <th className="px-4 py-2" rowSpan={2}></th>
-              <th className="px-4 py-2 text-center text-[11px] font-semibold text-[#666] uppercase tracking-wide border-l border-[#e0e0e0]" colSpan={2}>
-                Sellers We Meet
-              </th>
-              <th className="px-4 py-2 text-center text-[11px] font-semibold text-[#666] uppercase tracking-wide border-l border-[#e0e0e0]" colSpan={2}>
-                Marketplace Listings
-              </th>
-              <th className="px-4 py-2" rowSpan={2}></th>
-            </tr>
-            {/* Sub-header row */}
-            <tr className="bg-[#f1f3f4]">
               <th
+                rowSpan={2}
                 className="px-4 py-2.5 text-left text-[11px] font-semibold text-[#666] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors"
                 onClick={() => handleSort('buyer_name')}
               >
                 Buyer <SortIcon column="buyer_name" />
               </th>
               <th
+                rowSpan={2}
                 className="px-4 py-2.5 text-left text-[11px] font-semibold text-[#666] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors"
                 onClick={() => handleSort('buyer_type')}
               >
                 Type <SortIcon column="buyer_type" />
               </th>
+              <th colSpan={2} className="px-4 py-2 text-center text-[11px] font-semibold text-[#666] uppercase tracking-wide border-l border-[#e0e0e0]">
+                Seller Matches
+              </th>
+              <th colSpan={2} className="px-4 py-2 text-center text-[11px] font-semibold text-[#666] uppercase tracking-wide border-l border-[#e0e0e0]">
+                Marketplace Matches
+              </th>
+              <th
+                rowSpan={2}
+                className="px-4 py-2.5 text-center text-[11px] font-semibold text-[#666] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors"
+                onClick={() => handleSort('total_a')}
+              >
+                Total A <SortIcon column="total_a" />
+              </th>
+            </tr>
+            {/* Row 2: ONLY the A/B sub-headers */}
+            <tr className="bg-[#f1f3f4]">
               <th
                 className="px-4 py-2.5 text-center text-[11px] font-semibold text-[#1e7e34] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors border-l border-[#e0e0e0]"
                 onClick={() => handleSort('sellers_a')}
@@ -251,12 +252,6 @@ export default function BuyersPage() {
                 onClick={() => handleSort('listings_b')}
               >
                 B <SortIcon column="listings_b" />
-              </th>
-              <th
-                className="px-4 py-2.5 text-center text-[11px] font-semibold text-[#666] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors"
-                onClick={() => handleSort('total_a')}
-              >
-                Total A <SortIcon column="total_a" />
               </th>
             </tr>
           </thead>
