@@ -1,13 +1,12 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { MatchCounts } from '@/components/MatchCounts'
 import { TypeBadge } from '@/components/TypeBadge'
 import type { BuyerRow, BuyersResponse } from '@/lib/api'
 
 const API_BASE = 'https://outsearched.vercel.app'
 
-type SortKey = 'buyer_name' | 'buyer_type' | 'sellers_total' | 'listings_total' | 'total_a'
+type SortKey = 'buyer_name' | 'buyer_type' | 'sellers_a' | 'sellers_b' | 'listings_a' | 'listings_b' | 'total_a'
 type SortDir = 'asc' | 'desc'
 
 export default function BuyersPage() {
@@ -35,7 +34,6 @@ export default function BuyersPage() {
     load()
   }, [])
 
-  // Summary stats
   const stats = useMemo(() => {
     const clientCount = buyers.filter((b) => b.buyer_type === 'client').length
     const peCount = buyers.filter((b) => b.buyer_type === 'pe_firm').length
@@ -75,13 +73,21 @@ export default function BuyersPage() {
           aVal = a.buyer_type
           bVal = b.buyer_type
           break
-        case 'sellers_total':
-          aVal = a.matches.sellers.a + a.matches.sellers.b + a.matches.sellers.c
-          bVal = b.matches.sellers.a + b.matches.sellers.b + b.matches.sellers.c
+        case 'sellers_a':
+          aVal = a.matches.sellers.a
+          bVal = b.matches.sellers.a
           break
-        case 'listings_total':
-          aVal = a.matches.listings.a + a.matches.listings.b + a.matches.listings.c
-          bVal = b.matches.listings.a + b.matches.listings.b + b.matches.listings.c
+        case 'sellers_b':
+          aVal = a.matches.sellers.b
+          bVal = b.matches.sellers.b
+          break
+        case 'listings_a':
+          aVal = a.matches.listings.a
+          bVal = b.matches.listings.a
+          break
+        case 'listings_b':
+          aVal = a.matches.listings.b
+          bVal = b.matches.listings.b
           break
         case 'total_a':
           aVal = a.matches.sellers.a + a.matches.listings.a
@@ -113,6 +119,18 @@ export default function BuyersPage() {
     return <span className="ml-1 text-[#222]">{sortDir === 'asc' ? '↑' : '↓'}</span>
   }
 
+  const CountCell = ({ count, type }: { count: number; type: 'a' | 'b' }) => {
+    if (count === 0) return <span className="text-[#ccc]">-</span>
+    const colors = type === 'a'
+      ? 'bg-[#e6f4ea] text-[#1e7e34]'
+      : 'bg-[#fff8e1] text-[#b7791f]'
+    return (
+      <span className={`inline-flex items-center justify-center min-w-[28px] h-[26px] px-2 rounded text-sm font-semibold ${colors}`}>
+        {count}
+      </span>
+    )
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -142,7 +160,6 @@ export default function BuyersPage() {
         </div>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-4 gap-4 mb-8">
         <div className="bg-white border border-[#e0e0e0] rounded-md p-5 text-center">
           <div className="text-3xl font-semibold text-[#1a73e8]">{stats.clientCount}</div>
@@ -185,36 +202,61 @@ export default function BuyersPage() {
       <div className="bg-white border border-[#e0e0e0] rounded-md overflow-hidden">
         <table className="w-full">
           <thead>
+            {/* Group header row */}
+            <tr className="bg-[#f1f3f4] border-b border-[#e0e0e0]">
+              <th className="px-4 py-2" rowSpan={2}></th>
+              <th className="px-4 py-2" rowSpan={2}></th>
+              <th className="px-4 py-2 text-center text-[11px] font-semibold text-[#666] uppercase tracking-wide border-l border-[#e0e0e0]" colSpan={2}>
+                Sellers We Meet
+              </th>
+              <th className="px-4 py-2 text-center text-[11px] font-semibold text-[#666] uppercase tracking-wide border-l border-[#e0e0e0]" colSpan={2}>
+                Marketplace Listings
+              </th>
+              <th className="px-4 py-2" rowSpan={2}></th>
+            </tr>
+            {/* Sub-header row */}
             <tr className="bg-[#f1f3f4]">
               <th
-                className="px-4 py-3.5 text-left text-[11px] font-semibold text-[#666] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors"
+                className="px-4 py-2.5 text-left text-[11px] font-semibold text-[#666] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors"
                 onClick={() => handleSort('buyer_name')}
               >
                 Buyer <SortIcon column="buyer_name" />
               </th>
               <th
-                className="px-4 py-3.5 text-left text-[11px] font-semibold text-[#666] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors"
+                className="px-4 py-2.5 text-left text-[11px] font-semibold text-[#666] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors"
                 onClick={() => handleSort('buyer_type')}
               >
                 Type <SortIcon column="buyer_type" />
               </th>
               <th
-                className="px-4 py-3.5 text-left text-[11px] font-semibold text-[#666] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors"
-                onClick={() => handleSort('sellers_total')}
+                className="px-4 py-2.5 text-center text-[11px] font-semibold text-[#1e7e34] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors border-l border-[#e0e0e0]"
+                onClick={() => handleSort('sellers_a')}
               >
-                Sellers We Meet <SortIcon column="sellers_total" />
+                A <SortIcon column="sellers_a" />
               </th>
               <th
-                className="px-4 py-3.5 text-left text-[11px] font-semibold text-[#666] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors"
-                onClick={() => handleSort('listings_total')}
+                className="px-4 py-2.5 text-center text-[11px] font-semibold text-[#b7791f] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors"
+                onClick={() => handleSort('sellers_b')}
               >
-                Marketplace Listings <SortIcon column="listings_total" />
+                B <SortIcon column="sellers_b" />
               </th>
               <th
-                className="px-4 py-3.5 text-left text-[11px] font-semibold text-[#666] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors"
+                className="px-4 py-2.5 text-center text-[11px] font-semibold text-[#1e7e34] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors border-l border-[#e0e0e0]"
+                onClick={() => handleSort('listings_a')}
+              >
+                A <SortIcon column="listings_a" />
+              </th>
+              <th
+                className="px-4 py-2.5 text-center text-[11px] font-semibold text-[#b7791f] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors"
+                onClick={() => handleSort('listings_b')}
+              >
+                B <SortIcon column="listings_b" />
+              </th>
+              <th
+                className="px-4 py-2.5 text-center text-[11px] font-semibold text-[#666] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors"
                 onClick={() => handleSort('total_a')}
               >
-                Total A&apos;s <SortIcon column="total_a" />
+                Total A <SortIcon column="total_a" />
               </th>
             </tr>
           </thead>
@@ -229,19 +271,25 @@ export default function BuyersPage() {
                   <td className="px-4 py-4">
                     <TypeBadge type={buyer.buyer_type} />
                   </td>
-                  <td className="px-4 py-4">
-                    <MatchCounts counts={buyer.matches.sellers} />
+                  <td className="px-4 py-4 text-center border-l border-[#f0f0f0]">
+                    <CountCell count={buyer.matches.sellers.a} type="a" />
                   </td>
-                  <td className="px-4 py-4">
-                    <MatchCounts counts={buyer.matches.listings} />
+                  <td className="px-4 py-4 text-center">
+                    <CountCell count={buyer.matches.sellers.b} type="b" />
                   </td>
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-4 text-center border-l border-[#f0f0f0]">
+                    <CountCell count={buyer.matches.listings.a} type="a" />
+                  </td>
+                  <td className="px-4 py-4 text-center">
+                    <CountCell count={buyer.matches.listings.b} type="b" />
+                  </td>
+                  <td className="px-4 py-4 text-center">
                     {totalA > 0 ? (
-                      <span className="inline-flex items-center justify-center min-w-[28px] h-[26px] px-2.5 rounded-full text-sm font-semibold bg-[#e6f4ea] text-[#1e7e34]">
+                      <span className="inline-flex items-center justify-center min-w-[28px] h-[26px] px-2 rounded text-sm font-bold bg-[#e6f4ea] text-[#1e7e34]">
                         {totalA}
                       </span>
                     ) : (
-                      <span className="text-[#ccc]">0</span>
+                      <span className="text-[#ccc]">-</span>
                     )}
                   </td>
                 </tr>

@@ -1,12 +1,11 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { MatchCounts } from '@/components/MatchCounts'
 import type { SellerRow, SellersResponse } from '@/lib/api'
 
 const API_BASE = 'https://outsearched.vercel.app'
 
-type SortKey = 'company_name' | 'created_at' | 'client_total' | 'pe_total' | 'total_a'
+type SortKey = 'company_name' | 'created_at' | 'client_a' | 'client_b' | 'pe_a' | 'pe_b' | 'total_a'
 type SortDir = 'asc' | 'desc'
 
 export default function SellersPage() {
@@ -33,7 +32,6 @@ export default function SellersPage() {
     load()
   }, [])
 
-  // Calculate stats
   const stats = useMemo(() => {
     const totalA = sellers.reduce((sum, s) => sum + s.matches.client.a + s.matches.pe.a, 0)
     const totalB = sellers.reduce((sum, s) => sum + s.matches.client.b + s.matches.pe.b, 0)
@@ -68,13 +66,21 @@ export default function SellersPage() {
           aVal = new Date(a.created_at).getTime()
           bVal = new Date(b.created_at).getTime()
           break
-        case 'client_total':
-          aVal = a.matches.client.a + a.matches.client.b + a.matches.client.c
-          bVal = b.matches.client.a + b.matches.client.b + b.matches.client.c
+        case 'client_a':
+          aVal = a.matches.client.a
+          bVal = b.matches.client.a
           break
-        case 'pe_total':
-          aVal = a.matches.pe.a + a.matches.pe.b + a.matches.pe.c
-          bVal = b.matches.pe.a + b.matches.pe.b + b.matches.pe.c
+        case 'client_b':
+          aVal = a.matches.client.b
+          bVal = b.matches.client.b
+          break
+        case 'pe_a':
+          aVal = a.matches.pe.a
+          bVal = b.matches.pe.a
+          break
+        case 'pe_b':
+          aVal = a.matches.pe.b
+          bVal = b.matches.pe.b
           break
         case 'total_a':
           aVal = a.matches.client.a + a.matches.pe.a
@@ -106,6 +112,18 @@ export default function SellersPage() {
     return <span className="ml-1 text-[#222]">{sortDir === 'asc' ? '↑' : '↓'}</span>
   }
 
+  const CountCell = ({ count, type }: { count: number; type: 'a' | 'b' }) => {
+    if (count === 0) return <span className="text-[#ccc]">-</span>
+    const colors = type === 'a'
+      ? 'bg-[#e6f4ea] text-[#1e7e34]'
+      : 'bg-[#fff8e1] text-[#b7791f]'
+    return (
+      <span className={`inline-flex items-center justify-center min-w-[28px] h-[26px] px-2 rounded text-sm font-semibold ${colors}`}>
+        {count}
+      </span>
+    )
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -135,7 +153,6 @@ export default function SellersPage() {
         </div>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-4 gap-4 mb-8">
         <div className="bg-white border border-[#e0e0e0] rounded-md p-5 text-center">
           <div className="text-3xl font-semibold text-[#222]">{sellers.length}</div>
@@ -168,41 +185,68 @@ export default function SellersPage() {
       <div className="bg-white border border-[#e0e0e0] rounded-md overflow-hidden">
         <table className="w-full">
           <thead>
+            {/* Group header row */}
+            <tr className="bg-[#f1f3f4] border-b border-[#e0e0e0]">
+              <th className="px-4 py-2" rowSpan={2}></th>
+              <th className="px-4 py-2" rowSpan={2}></th>
+              <th className="px-4 py-2" rowSpan={2}></th>
+              <th className="px-4 py-2 text-center text-[11px] font-semibold text-[#666] uppercase tracking-wide border-l border-[#e0e0e0]" colSpan={2}>
+                Client Matches
+              </th>
+              <th className="px-4 py-2 text-center text-[11px] font-semibold text-[#666] uppercase tracking-wide border-l border-[#e0e0e0]" colSpan={2}>
+                PE Matches
+              </th>
+              <th className="px-4 py-2" rowSpan={2}></th>
+              <th className="px-4 py-2" rowSpan={2}></th>
+            </tr>
+            {/* Sub-header row */}
             <tr className="bg-[#f1f3f4]">
               <th
-                className="px-4 py-3.5 text-left text-[11px] font-semibold text-[#666] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors"
+                className="px-4 py-2.5 text-left text-[11px] font-semibold text-[#666] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors"
                 onClick={() => handleSort('company_name')}
               >
                 Company <SortIcon column="company_name" />
               </th>
-              <th className="px-4 py-3.5 text-left text-[11px] font-semibold text-[#666] uppercase tracking-wide">
+              <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-[#666] uppercase tracking-wide">
                 Domain
               </th>
               <th
-                className="px-4 py-3.5 text-left text-[11px] font-semibold text-[#666] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors"
+                className="px-4 py-2.5 text-left text-[11px] font-semibold text-[#666] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors"
                 onClick={() => handleSort('created_at')}
               >
                 Date <SortIcon column="created_at" />
               </th>
               <th
-                className="px-4 py-3.5 text-left text-[11px] font-semibold text-[#666] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors"
-                onClick={() => handleSort('client_total')}
+                className="px-4 py-2.5 text-center text-[11px] font-semibold text-[#1e7e34] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors border-l border-[#e0e0e0]"
+                onClick={() => handleSort('client_a')}
               >
-                Client Matches <SortIcon column="client_total" />
+                A <SortIcon column="client_a" />
               </th>
               <th
-                className="px-4 py-3.5 text-left text-[11px] font-semibold text-[#666] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors"
-                onClick={() => handleSort('pe_total')}
+                className="px-4 py-2.5 text-center text-[11px] font-semibold text-[#b7791f] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors"
+                onClick={() => handleSort('client_b')}
               >
-                PE Matches <SortIcon column="pe_total" />
+                B <SortIcon column="client_b" />
               </th>
               <th
-                className="px-4 py-3.5 text-left text-[11px] font-semibold text-[#666] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors"
+                className="px-4 py-2.5 text-center text-[11px] font-semibold text-[#1e7e34] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors border-l border-[#e0e0e0]"
+                onClick={() => handleSort('pe_a')}
+              >
+                A <SortIcon column="pe_a" />
+              </th>
+              <th
+                className="px-4 py-2.5 text-center text-[11px] font-semibold text-[#b7791f] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors"
+                onClick={() => handleSort('pe_b')}
+              >
+                B <SortIcon column="pe_b" />
+              </th>
+              <th
+                className="px-4 py-2.5 text-center text-[11px] font-semibold text-[#666] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors"
                 onClick={() => handleSort('total_a')}
               >
-                Total A&apos;s <SortIcon column="total_a" />
+                Total A <SortIcon column="total_a" />
               </th>
-              <th className="px-4 py-3.5 text-right text-[11px] font-semibold text-[#666] uppercase tracking-wide">
+              <th className="px-4 py-2.5 text-right text-[11px] font-semibold text-[#666] uppercase tracking-wide">
                 Actions
               </th>
             </tr>
@@ -232,19 +276,25 @@ export default function SellersPage() {
                   <td className="px-4 py-4 text-sm text-[#666]">
                     {new Date(seller.created_at).toLocaleDateString()}
                   </td>
-                  <td className="px-4 py-4">
-                    <MatchCounts counts={seller.matches.client} />
+                  <td className="px-4 py-4 text-center border-l border-[#f0f0f0]">
+                    <CountCell count={seller.matches.client.a} type="a" />
                   </td>
-                  <td className="px-4 py-4">
-                    <MatchCounts counts={seller.matches.pe} />
+                  <td className="px-4 py-4 text-center">
+                    <CountCell count={seller.matches.client.b} type="b" />
                   </td>
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-4 text-center border-l border-[#f0f0f0]">
+                    <CountCell count={seller.matches.pe.a} type="a" />
+                  </td>
+                  <td className="px-4 py-4 text-center">
+                    <CountCell count={seller.matches.pe.b} type="b" />
+                  </td>
+                  <td className="px-4 py-4 text-center">
                     {totalA > 0 ? (
-                      <span className="inline-flex items-center justify-center min-w-[28px] h-[26px] px-2.5 rounded-full text-sm font-semibold bg-[#e6f4ea] text-[#1e7e34]">
+                      <span className="inline-flex items-center justify-center min-w-[28px] h-[26px] px-2 rounded text-sm font-bold bg-[#e6f4ea] text-[#1e7e34]">
                         {totalA}
                       </span>
                     ) : (
-                      <span className="text-[#ccc]">0</span>
+                      <span className="text-[#ccc]">-</span>
                     )}
                   </td>
                   <td className="px-4 py-4 text-right">
@@ -254,7 +304,7 @@ export default function SellersPage() {
                       rel="noopener noreferrer"
                       className="inline-block px-3 py-1.5 text-xs font-medium text-[#222] bg-white border border-[#e0e0e0] rounded hover:bg-[#f1f3f4] hover:border-[#ccc] transition-colors"
                     >
-                      View Card →
+                      View Card
                     </a>
                   </td>
                 </tr>
