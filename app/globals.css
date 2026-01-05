@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg-paper: #f9f8f4;
+  --surface: #ffffff;
+  --text-main: #222222;
+  --text-muted: #666666;
+  --border: #e0e0e0;
+  --green: #1e7e34;
+  --green-bg: #e6f4ea;
+  --amber: #b7791f;
+  --amber-bg: #fff8e1;
+  --slate: #5f6368;
+  --slate-bg: #f1f3f4;
+}
+
+body {
+  background: var(--bg-paper);
+  color: var(--text-main);
+}
