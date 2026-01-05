@@ -9,6 +9,32 @@ const API_BASE = 'https://outsearched.vercel.app'
 type SortKey = 'buyer_name' | 'buyer_type' | 'sellers_a' | 'sellers_b' | 'listings_a' | 'listings_b' | 'total_a'
 type SortDir = 'asc' | 'desc'
 
+type ModalType = 'sellers' | 'listings'
+type ModalState = {
+  open: boolean
+  type: ModalType
+  grade: 'A' | 'B'
+  buyerId: number
+  buyerType: 'client' | 'pe_firm'
+  buyerName: string
+}
+
+type SellerMatch = {
+  company_id: string
+  company_name: string
+  fit_grade: string
+  seller_card_url: string
+}
+
+type ListingMatch = {
+  listing_id: string
+  business_name: string
+  fit_grade: string
+  asking_price: number | null
+  location: string | null
+  listing_url: string
+}
+
 export default function BuyersPage() {
   const [buyers, setBuyers] = useState<BuyerRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -17,6 +43,18 @@ export default function BuyersPage() {
   const [typeFilter, setTypeFilter] = useState<'all' | 'client' | 'pe_firm'>('all')
   const [sortKey, setSortKey] = useState<SortKey>('total_a')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
+
+  // Modal state
+  const [modal, setModal] = useState<ModalState>({
+    open: false,
+    type: 'sellers',
+    grade: 'A',
+    buyerId: 0,
+    buyerType: 'client',
+    buyerName: '',
+  })
+  const [modalData, setModalData] = useState<SellerMatch[] | ListingMatch[]>([])
+  const [modalLoading, setModalLoading] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -33,6 +71,29 @@ export default function BuyersPage() {
     }
     load()
   }, [])
+
+  // Load modal data when modal opens
+  useEffect(() => {
+    if (!modal.open) return
+
+    async function loadModalData() {
+      setModalLoading(true)
+      try {
+        const endpoint = modal.type === 'sellers' ? 'buyer-matches' : 'buyer-listings'
+        const url = `${API_BASE}/api/dashboard/${endpoint}?buyer_id=${modal.buyerId}&buyer_type=${modal.buyerType}&grade=${modal.grade}`
+        const res = await fetch(url)
+        if (!res.ok) throw new Error('Failed to fetch')
+        const data = await res.json()
+        setModalData(data.matches || [])
+      } catch (e) {
+        console.error('Modal data error:', e)
+        setModalData([])
+      } finally {
+        setModalLoading(false)
+      }
+    }
+    loadModalData()
+  }, [modal.open, modal.type, modal.grade, modal.buyerId, modal.buyerType])
 
   const stats = useMemo(() => {
     const clientCount = buyers.filter((b) => b.buyer_type === 'client').length
@@ -114,21 +175,64 @@ export default function BuyersPage() {
     }
   }
 
+  const openModal = (
+    type: ModalType,
+    grade: 'A' | 'B',
+    buyer: BuyerRow
+  ) => {
+    setModal({
+      open: true,
+      type,
+      grade,
+      buyerId: buyer.buyer_id,
+      buyerType: buyer.buyer_type,
+      buyerName: buyer.buyer_name,
+    })
+    setModalData([])
+  }
+
+  const closeModal = () => {
+    setModal((m) => ({ ...m, open: false }))
+  }
+
   const SortIcon = ({ column }: { column: SortKey }) => {
     if (sortKey !== column) return <span className="text-[#ccc] ml-1">↕</span>
     return <span className="ml-1 text-[#222]">{sortDir === 'asc' ? '↑' : '↓'}</span>
   }
 
-  const CountCell = ({ count, type }: { count: number; type: 'a' | 'b' }) => {
+  const ClickableCount = ({
+    count,
+    type,
+    matchType,
+    grade,
+    buyer,
+  }: {
+    count: number
+    type: 'a' | 'b'
+    matchType: ModalType
+    grade: 'A' | 'B'
+    buyer: BuyerRow
+  }) => {
     if (count === 0) return <span className="text-[#ccc]">-</span>
-    const colors = type === 'a'
-      ? 'bg-[#e6f4ea] text-[#1e7e34]'
-      : 'bg-[#fff8e1] text-[#b7791f]'
+    const colors =
+      type === 'a'
+        ? 'bg-[#e6f4ea] text-[#1e7e34] hover:bg-[#d4edda]'
+        : 'bg-[#fff8e1] text-[#b7791f] hover:bg-[#ffecb3]'
     return (
-      <span className={`inline-flex items-center justify-center min-w-[28px] h-[26px] px-2 rounded text-sm font-semibold ${colors}`}>
+      <button
+        onClick={() => openModal(matchType, grade, buyer)}
+        className={`inline-flex items-center justify-center min-w-[28px] h-[26px] px-2 rounded text-sm font-semibold cursor-pointer transition-colors ${colors}`}
+      >
         {count}
-      </span>
+      </button>
     )
+  }
+
+  const formatPrice = (price: number | null) => {
+    if (!price) return 'N/A'
+    if (price >= 1000000) return `$${(price / 1000000).toFixed(1)}M`
+    if (price >= 1000) return `$${(price / 1000).toFixed(0)}K`
+    return `$${price}`
   }
 
   if (loading) {
@@ -197,7 +301,6 @@ export default function BuyersPage() {
       <div className="bg-white border border-[#e0e0e0] rounded-md overflow-hidden">
         <table className="w-full">
           <thead>
-            {/* Row 1: Main headers with rowSpan for columns without sub-headers */}
             <tr className="bg-[#f1f3f4] border-b border-[#e0e0e0]">
               <th
                 rowSpan={2}
@@ -227,7 +330,6 @@ export default function BuyersPage() {
                 Total A <SortIcon column="total_a" />
               </th>
             </tr>
-            {/* Row 2: ONLY the A/B sub-headers */}
             <tr className="bg-[#f1f3f4]">
               <th
                 className="px-4 py-2.5 text-center text-[11px] font-semibold text-[#1e7e34] uppercase tracking-wide cursor-pointer hover:bg-[#e8e8e8] transition-colors border-l border-[#e0e0e0]"
@@ -267,16 +369,16 @@ export default function BuyersPage() {
                     <TypeBadge type={buyer.buyer_type} />
                   </td>
                   <td className="px-4 py-4 text-center border-l border-[#f0f0f0]">
-                    <CountCell count={buyer.matches.sellers.a} type="a" />
+                    <ClickableCount count={buyer.matches.sellers.a} type="a" matchType="sellers" grade="A" buyer={buyer} />
                   </td>
                   <td className="px-4 py-4 text-center">
-                    <CountCell count={buyer.matches.sellers.b} type="b" />
+                    <ClickableCount count={buyer.matches.sellers.b} type="b" matchType="sellers" grade="B" buyer={buyer} />
                   </td>
                   <td className="px-4 py-4 text-center border-l border-[#f0f0f0]">
-                    <CountCell count={buyer.matches.listings.a} type="a" />
+                    <ClickableCount count={buyer.matches.listings.a} type="a" matchType="listings" grade="A" buyer={buyer} />
                   </td>
                   <td className="px-4 py-4 text-center">
-                    <CountCell count={buyer.matches.listings.b} type="b" />
+                    <ClickableCount count={buyer.matches.listings.b} type="b" matchType="listings" grade="B" buyer={buyer} />
                   </td>
                   <td className="px-4 py-4 text-center">
                     {totalA > 0 ? (
@@ -301,6 +403,92 @@ export default function BuyersPage() {
           </div>
         )}
       </div>
+
+      {/* Modal */}
+      {modal.open && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={closeModal}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-6 py-4 border-b border-[#e0e0e0] flex justify-between items-center">
+              <div>
+                <h2 className="text-lg font-semibold text-[#222]">
+                  {modal.type === 'sellers' ? 'Seller Matches' : 'Marketplace Matches'}
+                </h2>
+                <p className="text-sm text-[#666]">
+                  {modal.buyerName} - Grade {modal.grade}
+                </p>
+              </div>
+              <button
+                onClick={closeModal}
+                className="text-[#666] hover:text-[#222] text-2xl leading-none"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="px-6 py-4 overflow-y-auto max-h-[60vh]">
+              {modalLoading ? (
+                <div className="text-center py-8 text-[#666]">Loading...</div>
+              ) : modalData.length === 0 ? (
+                <div className="text-center py-8 text-[#666]">No matches found</div>
+              ) : modal.type === 'sellers' ? (
+                <div className="space-y-3">
+                  {(modalData as SellerMatch[]).map((match) => (
+                    <div
+                      key={match.company_id}
+                      className="flex items-center justify-between p-3 bg-[#fafafa] rounded-md hover:bg-[#f1f3f4] transition-colors"
+                    >
+                      <div>
+                        <div className="font-medium text-[#222]">{match.company_name}</div>
+                        <div className="text-sm text-[#666]">Grade {match.fit_grade}</div>
+                      </div>
+                      <a
+                        href={`${API_BASE}${match.seller_card_url}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 text-xs font-medium text-[#222] bg-white border border-[#e0e0e0] rounded hover:bg-[#f1f3f4] hover:border-[#ccc] transition-colors"
+                      >
+                        View Card
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {(modalData as ListingMatch[]).map((match) => (
+                    <div
+                      key={match.listing_id}
+                      className="flex items-center justify-between p-3 bg-[#fafafa] rounded-md hover:bg-[#f1f3f4] transition-colors"
+                    >
+                      <div>
+                        <div className="font-medium text-[#222]">{match.business_name}</div>
+                        <div className="text-sm text-[#666]">
+                          {formatPrice(match.asking_price)}
+                          {match.location && ` • ${match.location}`}
+                          {' • '}Grade {match.fit_grade}
+                        </div>
+                      </div>
+                      <a
+                        href={match.listing_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 text-xs font-medium text-[#222] bg-white border border-[#e0e0e0] rounded hover:bg-[#f1f3f4] hover:border-[#ccc] transition-colors"
+                      >
+                        View Listing
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
