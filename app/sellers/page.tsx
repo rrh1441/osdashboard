@@ -33,12 +33,14 @@ export default function SellersPage() {
   }, [])
 
   const stats = useMemo(() => {
-    const totalA = sellers.reduce((sum, s) => sum + s.matches.client.a + s.matches.pe.a, 0)
-    const totalB = sellers.reduce((sum, s) => sum + s.matches.client.b + s.matches.pe.b, 0)
+    const clientA = sellers.reduce((sum, s) => sum + s.matches.client.a, 0)
+    const clientB = sellers.reduce((sum, s) => sum + s.matches.client.b, 0)
+    const peA = sellers.reduce((sum, s) => sum + s.matches.pe.a, 0)
+    const peB = sellers.reduce((sum, s) => sum + s.matches.pe.b, 0)
     const withMatches = sellers.filter(s =>
       s.matches.client.a + s.matches.client.b + s.matches.pe.a + s.matches.pe.b > 0
     ).length
-    return { totalA, totalB, withMatches }
+    return { clientA, clientB, peA, peB, withMatches }
   }, [sellers])
 
   const filteredAndSorted = useMemo(() => {
@@ -148,18 +150,28 @@ export default function SellersPage() {
         </h1>
       </div>
 
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-5 gap-4 mb-8">
         <div className="bg-white border border-[#e0e0e0] rounded-md p-5 text-center">
           <div className="text-3xl font-semibold text-[#222]">{sellers.length}</div>
           <div className="text-[11px] uppercase tracking-widest text-[#666] mt-2">Total Sellers</div>
         </div>
         <div className="bg-white border border-[#e0e0e0] rounded-md p-5 text-center">
-          <div className="text-3xl font-semibold text-[#1e7e34]">{stats.totalA}</div>
-          <div className="text-[11px] uppercase tracking-widest text-[#666] mt-2">A Matches</div>
+          <div className="flex justify-center gap-3">
+            <span className="text-2xl font-semibold text-[#1e7e34]">{stats.clientA}</span>
+            <span className="text-2xl font-semibold text-[#b7791f]">{stats.clientB}</span>
+          </div>
+          <div className="text-[11px] uppercase tracking-widest text-[#666] mt-2">Client A / B</div>
         </div>
         <div className="bg-white border border-[#e0e0e0] rounded-md p-5 text-center">
-          <div className="text-3xl font-semibold text-[#b7791f]">{stats.totalB}</div>
-          <div className="text-[11px] uppercase tracking-widest text-[#666] mt-2">B Matches</div>
+          <div className="flex justify-center gap-3">
+            <span className="text-2xl font-semibold text-[#1e7e34]">{stats.peA}</span>
+            <span className="text-2xl font-semibold text-[#b7791f]">{stats.peB}</span>
+          </div>
+          <div className="text-[11px] uppercase tracking-widest text-[#666] mt-2">PE Firm A / B</div>
+        </div>
+        <div className="bg-white border border-[#e0e0e0] rounded-md p-5 text-center">
+          <div className="text-3xl font-semibold text-[#1e7e34]">{stats.clientA + stats.peA}</div>
+          <div className="text-[11px] uppercase tracking-widest text-[#666] mt-2">Total A</div>
         </div>
         <div className="bg-white border border-[#e0e0e0] rounded-md p-5 text-center">
           <div className="text-3xl font-semibold text-[#222]">{stats.withMatches}</div>
