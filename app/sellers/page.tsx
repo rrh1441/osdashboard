@@ -142,15 +142,10 @@ export default function SellersPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-8">
         <h1 className="font-serif text-3xl font-semibold text-[#111] tracking-tight">
           Seller Dashboard
         </h1>
-        <div className="flex gap-6 text-sm">
-          <span className="text-[#666]">{sellers.length} sellers</span>
-          <span className="text-[#1e7e34] font-semibold">{stats.totalA} A matches</span>
-          <span className="text-[#b7791f] font-medium">{stats.totalB} B matches</span>
-        </div>
       </div>
 
       <div className="grid grid-cols-4 gap-4 mb-8">
